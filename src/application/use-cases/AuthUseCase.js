@@ -1,12 +1,25 @@
-import { apiClient } from '../../infrastructure/http/ApiClient.js';
-
 export class AuthUseCase {
+  constructor(httpClient = null) {
+    this.httpClient = httpClient;
+  }
+
+  setHttpClient(httpClient) {
+    this.httpClient = httpClient;
+  }
+
+  get client() {
+    if (!this.httpClient) {
+      throw new Error('HttpClientPort not bound in AuthUseCase');
+    }
+    return this.httpClient;
+  }
+
   async login(username, password) {
-    const data = await apiClient.request('/api/auth/login', {
+    const data = await this.client.request('/api/auth/login', {
       method: 'POST',
       body: { username, password },
     });
-    apiClient.setToken(data.accessToken);
+    this.client.setToken(data.accessToken);
     localStorage.setItem('auth_user', JSON.stringify({
       username: data.username,
       role: data.role,
@@ -15,7 +28,9 @@ export class AuthUseCase {
   }
 
   logout() {
-    apiClient.setToken(null);
+    if (this.httpClient) {
+      this.httpClient.setToken(null);
+    }
     localStorage.removeItem('auth_user');
   }
 
@@ -25,7 +40,7 @@ export class AuthUseCase {
   }
 
   async registerSeller(username, password) {
-    return await apiClient.request('/api/auth/register', {
+    return await this.client.request('/api/auth/register', {
       method: 'POST',
       body: { username, password },
     });

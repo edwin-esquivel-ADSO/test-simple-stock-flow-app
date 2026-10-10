@@ -1,6 +1,19 @@
-import { apiClient } from '../../infrastructure/http/ApiClient.js';
-
 export class CatalogUseCase {
+  constructor(httpClient = null) {
+    this.httpClient = httpClient;
+  }
+
+  setHttpClient(httpClient) {
+    this.httpClient = httpClient;
+  }
+
+  get client() {
+    if (!this.httpClient) {
+      throw new Error('HttpClientPort not bound in CatalogUseCase');
+    }
+    return this.httpClient;
+  }
+
   async getProducts(params = {}) {
     const searchParams = new URLSearchParams();
     if (params.page) searchParams.append('page', params.page);
@@ -8,29 +21,29 @@ export class CatalogUseCase {
     if (params.categoryId) searchParams.append('categoryId', params.categoryId);
 
     const query = searchParams.toString() ? `?${searchParams.toString()}` : '';
-    return await apiClient.request(`/api/products${query}`);
+    return await this.client.request(`/api/products${query}`);
   }
 
   async getCategories() {
-    return await apiClient.request('/api/categories');
+    return await this.client.request('/api/categories');
   }
 
   async createProduct(data) {
-    return await apiClient.request('/api/products', {
+    return await this.client.request('/api/products', {
       method: 'POST',
       body: data,
     });
   }
 
   async updateProduct(id, data) {
-    return await apiClient.request(`/api/products/${id}`, {
+    return await this.client.request(`/api/products/${id}`, {
       method: 'PUT',
       body: data,
     });
   }
 
   async deleteProduct(id) {
-    return await apiClient.request(`/api/products/${id}`, {
+    return await this.client.request(`/api/products/${id}`, {
       method: 'DELETE',
     });
   }
